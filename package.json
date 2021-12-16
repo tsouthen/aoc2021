@@ -10,8 +10,12 @@
   "license": "MIT",
   "dependencies": {
     "@types/node": "^16.11.12",
+    "node-dijkstra": "^2.5.0",
     "ts-node": "^10.4.0",
     "tslib": "^2.3.1",
     "typescript": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node-dijkstra": "^2.5.2"
   }
 }
