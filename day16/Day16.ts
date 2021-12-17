@@ -10,7 +10,7 @@ class Packet {
     return this.version !== 0 || this.typeId === 4 || this.subPackets.length > 0;
   }
 
-  parse(data: string, startPos: number, skipZeroes: boolean) {
+  parse(data: string, startPos: number) {
     if (startPos >= data.length)
       return -1;
     let currPos = startPos;
@@ -40,7 +40,7 @@ class Packet {
         let subIdx = 0;
         let packet = new Packet();
         do {
-          [packet, subIdx] = Packet.newPacket(subPacketData, subIdx, false);
+          [packet, subIdx] = Packet.newPacket(subPacketData, subIdx);
           if (packet.isValid) {
             this.subPackets.push(packet);
           }
@@ -51,16 +51,10 @@ class Packet {
         const numSubs = Number.parseInt(numSubsBits, 2);
         let packet = new Packet();
         Array.from({ length: numSubs }).forEach(_ => {
-          [packet, currPos] = Packet.newPacket(data, currPos, false);
+          [packet, currPos] = Packet.newPacket(data, currPos);
           this.subPackets.push(packet);
         });
       }
-    }
-
-    // Skip any zero padding that pads the whole packet out to a multiple of 4
-    if (skipZeroes) {
-      while (data[currPos] === "0" && ((currPos - startPos) % 8 !== 0))
-        currPos++;
     }
     return currPos;
   }
@@ -70,9 +64,9 @@ class Packet {
     return sum;
   }
 
-  static newPacket(data: string, startPos: number, skipZeroes = true): [Packet, number] {
+  static newPacket(data: string, startPos: number): [Packet, number] {
     const packet = new Packet();
-    const endPos = packet.parse(data, startPos, skipZeroes);
+    const endPos = packet.parse(data, startPos);
     return [packet, endPos];
   }
 
