@@ -127,15 +127,14 @@ class Day18 {
     console.log(`Part 1: sum: ${this.magnitude(sum)}`);
   }
 
-  sum(p1: PairType, p2: PairType) {
-    // make a copy of the data so the input data isn't modified
-    const pair = JSON.parse(JSON.stringify([p1, p2]));
+  sum(p1: string, p2: string) {
+    const pair = [JSON.parse(p1), JSON.parse(p2)];
     return this.magnitude(this.reduce(pair as PairType));
   }
 
   partTwo() {
     const contents = readFileSync("day18/day18_ex.txt", "utf8") as string;
-    const data = contents.split("\n").map(line => JSON.parse(line));
+    const data = contents.split("\n");
     let largest = 0;
     for (let ii = 0; ii < data.length; ++ii) {
       for (let jj = 0; jj < data.length; ++jj) {
