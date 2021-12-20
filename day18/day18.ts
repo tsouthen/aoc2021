@@ -3,97 +3,44 @@ import { readFileSync } from "fs";
 type PairType = Array<number | Array<number>>;
 
 class Day18 {
-  data = new Array<string>();
-  constructor() {
-    this.loadData("day18/day18_ex.txt");
+  nextExplode(data: PairType, parents: Array<number> = []): Array<number> {
+    const a0 = Array.isArray(data[0]);
+    const a1 = Array.isArray(data[1]);
+
+    if (parents.length === 4 && !a0 && !a1)
+      return parents;
+
+    let result: Array<number> | undefined;
+    if (a0)
+      result = this.nextExplode(data[0] as PairType, [...parents, 0]);
+
+    if (a1 && (result === undefined || result.length === 0))
+      result = this.nextExplode(data[1] as PairType, [...parents, 1]);
+
+    return result ?? [];
   }
 
-  // isNumeric(str: string) {
-  //   return /^\d+$/.test(str);
-  // }
-
-  // explodePair(input: string, idx: number) {
-  //   console.log(`Explode pair at: ${idx}: ${input}`);
-  //   // get first number to the left
-  //   let leftIdx = idx - 1;
-  //   while (leftIdx >= 0 && this.isNumeric(input[leftIdx]))
-  //     leftIdx--;
-  //   if (leftIdx >= 0) {
-  //     let leftLen = 1;
-  //     while (((leftIdx + leftLen) < idx) && this.isNumeric(input[leftIdx + leftLen]))
-  //       leftLen++;
-
-  //   }
-  //   return input;
-  // }
-
-  // splitCount(input: string, idx: number) {
-  //   let endIdx = idx;
-  //   while (endIdx < input.length && this.isNumeric(input[endIdx]))
-  //     endIdx++;
-  //   return endIdx - idx;
-  // }
-
-  // splitNumber(input: string, idx: number, numChars: number) {
-  //   const val = Number(input.substr(idx, numChars));
-  //   const newPair = `[${Math.floor(val / 2)},${Math.ceil(val / 2)}]`;
-  //   return input.substr(0, idx) + newPair + input.substr(idx + numChars);
-  // }
-
-  // reduceSingle(input: string) {
-  //   let depth = 0;
-  //   for (let idx = 0; idx < input.length; ++idx) {
-  //     if (input[idx] === ",") {
-  //       // do nothing
-  //     } else if (input[idx] === "[") {
-  //       depth += 1;
-  //     } else if (input[idx] === "]") {
-  //       depth -= 1;
-  //     } else if (depth >= 5) {
-  //       return this.explodePair(input, idx);
-  //     } else {
-  //       const splitCount = this.splitCount(input, idx);
-  //       if (splitCount >= 2)
-  //         return this.splitNumber(input, idx, splitCount);
-  //     }
-  //   }
-  //   return undefined;
-  // }
-
-  // reduce(input: string) {
-  //   let prevVal = input;
-  //   do {
-  //     const newVal = this.reduceSingle(prevVal);
-  //     if (newVal === undefined || newVal.length === prevVal.length)
-  //       return prevVal;
-  //     prevVal = newVal;
-  //   } while (true);
-  // }
-
-  loadData(fileName: string) {
-    const contents = readFileSync(fileName, "utf8") as string;
-    this.data.length = 0;
-    this.data.push(...contents.split("\n"));
-  }
-
-  traverse(data: PairType, parents: Array<number> = []): Array<number> {
+  nextSplit(data: PairType, parents: Array<number> = []): Array<number> {
     const a0 = Array.isArray(data[0]);
     const a1 = Array.isArray(data[1]);
     const gt0 = data[0] > 9;
     const gt1 = data[1] > 9;
 
-    if (parents.length === 4 && !a0 && !a1)
-      return parents;
-
-    if (gt0 || gt1)
+    if (gt0)
       return parents;
 
     let result: Array<number> | undefined;
-    if (a0)
-      result = this.traverse(data[0] as PairType, [...parents, 0]);
+    if (a0) {
+      result = this.nextSplit(data[0] as PairType, [...parents, 0]);
+      if (result !== undefined && result.length > 0)
+        return result;
+    }
 
-    if (a1 && (result === undefined || result.length === 0))
-      result = this.traverse(data[1] as PairType, [...parents, 1]);
+    if (gt1)
+      return parents;
+
+    if (a1)
+      result = this.nextSplit(data[1] as PairType, [...parents, 1]);
 
     return result ?? [];
   }
@@ -115,10 +62,10 @@ class Day18 {
     currData[idx] = (currData[idx] as number) + value;
   }
 
-  explode(data: PairType, reduction: Array<number>, left: boolean) {
-    const currVal = reduction.reduce((pair, val) => pair[val] as Array<number>, data);
+  explode(data: PairType, path: Array<number>, left: boolean) {
+    const currVal = path.reduce((pair, val) => pair[val] as Array<number>, data);
     const incr = currVal[left ? 0 : 1] as number;
-    const currRed = [...reduction];
+    const currRed = [...path];
     while (currRed[currRed.length - 1] === (left ? 0 : 1))
       currRed.pop();
     if (currRed.length === 0)
@@ -135,36 +82,77 @@ class Day18 {
 
   reduce(data: PairType) {
     do {
-      const reduction = this.traverse(data);
-      if (reduction.length === 0)
-        return;
+      let splits = false;
+      let path = this.nextExplode(data);
+      if (path.length === 0) {
+        path = this.nextSplit(data);
+        if (path.length === 0)
+          return data;
+        splits = true;
+      }
 
-      console.log(` reduce: ${JSON.stringify(reduction)}`);
       let currData = data;
       let parentData = data;
-      for (let idx = 0; idx < reduction.length; ++idx) {
+      for (let idx = 0; idx < path.length; ++idx) {
         parentData = currData;
-        currData = currData[reduction[idx]] as PairType;
+        currData = currData[path[idx]] as PairType;
       }
-      if (!this.splitValue(currData, 0) && !this.splitValue(currData, 1)) {
+
+      if (splits) {
+        if (!this.splitValue(currData, 0))
+          this.splitValue(currData, 1)
+      } else {
         const explodeIdx = typeof (parentData[0]) === "number" ? 1 : 0;
-        this.explode(data, reduction, false);
-        this.explode(data, reduction, true);
+        this.explode(data, path, false);
+        this.explode(data, path, true);
         parentData[explodeIdx] = 0;
       }
     } while (true);
   }
 
+  magnitude(data: PairType): number {
+    const a0 = Array.isArray(data[0]);
+    const a1 = Array.isArray(data[1]);
+
+    return (3 * (a0 ? this.magnitude(data[0] as Array<number>) : data[0] as number)) +
+      (2 * (a1 ? this.magnitude(data[1] as Array<number>) : data[1] as number));
+  }
+
   partOne() {
-    const data = JSON.parse("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
-    console.log(` before: ${JSON.stringify(data)}`);
-    this.reduce(data);
-    console.log(`  after: ${JSON.stringify(data)}`);
+    const contents = readFileSync("day18/day18_ex.txt", "utf8") as string;
+    const data = contents.split("\n");
+    let sum = JSON.parse(data.shift()!);
+    while (data.length > 0) {
+      const next = JSON.parse(data.shift()!);
+      sum = [sum, next];
+      this.reduce(sum);
+    }
+    console.log(`Part 1: sum: ${this.magnitude(sum)}`);
+  }
+
+  sum(p1: PairType, p2: PairType) {
+    // make a copy of the data so the input data isn't modified
+    const pair = JSON.parse(JSON.stringify([p1, p2]));
+    return this.magnitude(this.reduce(pair as PairType));
+  }
+
+  partTwo() {
+    const contents = readFileSync("day18/day18_ex.txt", "utf8") as string;
+    const data = contents.split("\n").map(line => JSON.parse(line));
+    let largest = 0;
+    for (let ii = 0; ii < data.length; ++ii) {
+      for (let jj = 0; jj < data.length; ++jj) {
+        if (ii != jj)
+          largest = Math.max(largest, this.sum(data[ii], data[jj]));
+      }
+    }
+    console.log(`Part 2: largest sum: ${largest}`);
   }
 
   static go() {
     const d = new Day18();
     d.partOne();
+    d.partTwo();
   }
 }
 
