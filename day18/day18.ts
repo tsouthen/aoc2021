@@ -21,28 +21,25 @@ class Day18 {
   }
 
   nextSplit(data: PairType, parents: Array<number> = []): Array<number> {
-    const a0 = Array.isArray(data[0]);
-    const a1 = Array.isArray(data[1]);
-    const gt0 = data[0] > 9;
-    const gt1 = data[1] > 9;
-
-    if (gt0)
+    if (data[0] > 9)
       return parents;
 
-    let result: Array<number> | undefined;
-    if (a0) {
-      result = this.nextSplit(data[0] as PairType, [...parents, 0]);
+    if (Array.isArray(data[0])) {
+      const result = this.nextSplit(data[0] as PairType, [...parents, 0]);
       if (result !== undefined && result.length > 0)
         return result;
     }
 
-    if (gt1)
+    if (data[1] > 9)
       return parents;
 
-    if (a1)
-      result = this.nextSplit(data[1] as PairType, [...parents, 1]);
+    if (Array.isArray(data[1])) {
+      const result = this.nextSplit(data[1] as PairType, [...parents, 1]);
+      if (result !== undefined && result.length > 0)
+        return result;
+    }
 
-    return result ?? [];
+    return [];
   }
 
   splitValue(currData: PairType, idx: number) {
