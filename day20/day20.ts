@@ -1,10 +1,5 @@
 import { readFileSync } from "fs";
 
-interface Point {
-  x: number;
-  y: number;
-}
-
 class Day20 {
   algorithm: number[] = [];
   image: number[][] = [];
@@ -21,14 +16,14 @@ class Day20 {
     this.image = data.map(line => Array.from(line).map(ch => ch === "#" ? 1 : 0));
   }
 
-  getAdjacentPixels(image: number[][], pt: Point, fill: number) {
+  getAdjacentPixels(image: number[][], x: number, y: number, fill: number) {
     const maxX = image[0].length;
     const maxY = image.length;
     const adjacents: number[] = [];
     for (const [currX, currY] of [
-      [pt.x - 1, pt.y - 1], [pt.x, pt.y - 1], [pt.x + 1, pt.y - 1],
-      [pt.x - 1, pt.y], [pt.x, pt.y], [pt.x + 1, pt.y],
-      [pt.x - 1, pt.y + 1], [pt.x, pt.y + 1], [pt.x + 1, pt.y + 1],
+      [x - 1, y - 1], [x, y - 1], [x + 1, y - 1],
+      [x - 1, y + 0], [x, y + 0], [x + 1, y + 0],
+      [x - 1, y + 1], [x, y + 1], [x + 1, y + 1],
     ]) {
       if (currX >= 0 && currX < maxX && currY >= 0 && currY < maxY)
         adjacents.push(image[currY][currX]);
@@ -40,7 +35,7 @@ class Day20 {
 
   applyAlgorithm(image: number[][], row: number[], rowIdx: number, fill: number) {
     return row.map((_val, col) => {
-      const strLookupVal = this.getAdjacentPixels(image, { x: col, y: rowIdx }, fill).map(String).join("");
+      const strLookupVal = this.getAdjacentPixels(image, col, rowIdx, fill).map(String).join("");
       const lookupVal = Number.parseInt(strLookupVal, 2);
       const newVal = this.algorithm[lookupVal];
       return newVal;
