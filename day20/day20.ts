@@ -17,28 +17,19 @@ class Day20 {
   }
 
   getAdjacentPixels(image: number[][], x: number, y: number, fill: number) {
-    const maxX = image[0].length;
-    const maxY = image.length;
     const adjacents: number[] = [];
-    for (const [currX, currY] of [
-      [x - 1, y - 1], [x, y - 1], [x + 1, y - 1],
-      [x - 1, y + 0], [x, y + 0], [x + 1, y + 0],
-      [x - 1, y + 1], [x, y + 1], [x + 1, y + 1],
-    ]) {
-      if (currX >= 0 && currX < maxX && currY >= 0 && currY < maxY)
-        adjacents.push(image[currY][currX]);
-      else
-        adjacents.push(fill);
+    for (let currY = y - 1; currY <= y + 1; ++currY) {
+      for (let currX = x - 1; currX <= x + 1; ++currX) {
+        adjacents.push(image[currY]?.[currX] ?? fill);
+      }
     }
     return adjacents;
   }
 
   applyAlgorithm(image: number[][], row: number[], rowIdx: number, fill: number) {
-    return row.map((_val, col) => {
-      const strLookupVal = this.getAdjacentPixels(image, col, rowIdx, fill).map(String).join("");
-      const lookupVal = Number.parseInt(strLookupVal, 2);
-      const newVal = this.algorithm[lookupVal];
-      return newVal;
+    return row.map((_val, colIdx) => {
+      const strLookupVal = this.getAdjacentPixels(image, colIdx, rowIdx, fill).map(String).join("");
+      return this.algorithm[Number.parseInt(strLookupVal, 2)];
     });
   }
 
