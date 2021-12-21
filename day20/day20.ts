@@ -61,7 +61,10 @@ class Day20 {
     let fill = 0;
     for (let idx = 0; idx < iterations; ++idx) {
       newImage = this.expandImage(newImage, fill).map((row, idx, image) => this.applyAlgorithm(image, row, idx, fill));
-      fill = this.algorithm[0] === 0 ? 0 : (fill + 1) % 2; //assumes this.algorithm[511] === 0, otherwise we can't do the puzzle
+      if (fill === 0 && this.algorithm[0] === 1)
+        fill = 1;
+      else if (fill === 1 && this.algorithm[511] === 0)
+        fill = 0;
     }
     return newImage;
   }
